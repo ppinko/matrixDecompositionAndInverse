@@ -6,6 +6,11 @@ from numpy.core.fromnumeric import shape
 wiki = np.array(
     [[4.0, 12.0, -16.0], [12.0, 37.0, -43.0], [-16.0, -43.0, 98.0]])
 
+mat4x4 = np.array([[2.0, 4.0, -2.0, 2.0],
+                   [4.0, 9.0, -1.0, 6.0],
+                   [-2.0, -1.0, 14.0, 13.0],
+                   [2.0, 6.0, 13.0, 35.0]])
+
 
 def applyPermutation(matrix, permutations):
     matrix_size = len(permutations)
@@ -18,20 +23,26 @@ def applyPermutation(matrix, permutations):
 
 
 def myCholeskyImplementation(m):
-    ret = np.zeros(shape=m.shape)
+    L = np.zeros(shape=m.shape)
 
     for row in range(len(m)):
         for col in range(row, len(m)):
             sum_temp = np.float32()
             for ind in range(row):
-                sum_temp += ret[ind][row] * ret[ind][col]
+                sum_temp += L[ind][row] * L[ind][col]
             temp = m[row][col] - sum_temp
 
             if row == col:
-                ret[row][col] = math.sqrt(temp)
+                if temp >= 0.0:
+                    L[row][col] = math.sqrt(temp)
+                else:
+                    return 0
             else:
-                ret[row][col] = temp / ret[row][row]
-    return ret
+                if L[row][row] != 0:
+                    L[row][col] = temp / L[row][row]
+                else:
+                    return 0
+    return L
 
 
 print('My implementation of Cholesky decomposition = ')
@@ -54,7 +65,7 @@ print('\n')
 
 def myPivotedCholeskyImplementation(m):
     mat = copy.deepcopy(m)
-    ret = np.zeros(shape=mat.shape)
+    L = np.zeros(shape=mat.shape)
     permutations = list(range(len(mat)))
 
     for row in range(len(mat)):
@@ -77,23 +88,25 @@ def myPivotedCholeskyImplementation(m):
             mat[[row, pivot], :] = mat[[pivot, row], :]
 
             # swap columns of result
-            ret[:, [row, pivot]] = ret[:, [pivot, row]]
+            L[:, [row, pivot]] = L[:, [pivot, row]]
 
         for col in range(row, len(mat)):
             sum_temp = np.float32()
             for ind in range(row):
-                sum_temp += ret[ind][row] * ret[ind][col]
+                sum_temp += L[ind][row] * L[ind][col]
             temp = mat[row][col] - sum_temp
 
             if row == col:
                 if temp >= 0:
-                    ret[row][col] = math.sqrt(temp)
+                    L[row][col] = math.sqrt(temp)
                 else:
-                    ret[row][col] = temp
+                    return (0, 0)
             else:
-                ret[row][col] = temp / ret[row][row]
-
-    return (ret, permutations)
+                if L[row][row] != 0:
+                    L[row][col] = temp / L[row][row]
+                else:
+                    return (0, 0)
+    return (L, permutations)
 
 
 def revertPivotedCholeskyImplementation(L, P):
@@ -112,4 +125,48 @@ print(wiki)
 print('L * LT permutated = ')
 print(revertPivotedCholeskyImplementation(
     wikiPivotedDecomposed, wikiPermutations))
-# print(np.dot(wikiPivotedDecomposed, np.transpose(wikiPivotedDecomposed)))
+print('\n')
+
+print('My implementation of pivoted Cholesky decomposition = ')
+mat4x4PivotedDecomposed, mat4x4Permutations = myPivotedCholeskyImplementation(
+    mat4x4)
+print(mat4x4Permutations)
+print(mat4x4PivotedDecomposed)
+print('\n')
+
+print('Test matrix = ')
+print(mat4x4)
+print('L * LT permutated = ')
+print(revertPivotedCholeskyImplementation(
+    mat4x4PivotedDecomposed, mat4x4Permutations))
+print('\n')
+
+
+def myLDLTdecomposition(m):
+    D = np.eye(len(m), dtype=np.float32)
+    L = np.zeros(shape=m.shape)
+
+    for row in range(len(m)):
+        for col in range(row, len(m)):
+            sum_temp = np.float32()
+            for ind in range(row):
+                sum_temp += L[ind][row] * D[ind][ind] * L[ind][col]
+            temp = m[row][col] - sum_temp
+
+            if row == col:
+                D[row][row] = temp
+                L[row][row] = 1.0
+            else:
+                if D[row][row] != 0:
+                    L[row][col] = temp / D[row][row]
+                else:
+                    return (0, 0)
+    return (L, D)
+
+
+print('My implementation of pivoted LDLT decomposition: ')
+L, D = myLDLTdecomposition(mat4x4)
+print('\nL= ')
+print(L)
+print('\nD= ')
+print(D)
