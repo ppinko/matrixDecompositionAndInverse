@@ -66,7 +66,7 @@ print('\n')
 def myPivotedCholeskyImplementation(m):
     mat = copy.deepcopy(m)
     L = np.zeros(shape=mat.shape)
-    permutations = list(range(len(mat)))
+    P = list(range(len(mat)))
 
     for row in range(len(mat)):
         diag = np.array(mat.diagonal())
@@ -79,9 +79,9 @@ def myPivotedCholeskyImplementation(m):
                     val = maxVal
 
         if pivot != row:
-            # swap permutations
-            permutations[pivot] = permutations[row]
-            permutations[row] = pivot
+            # swap P
+            P[pivot] = P[row]
+            P[row] = pivot
 
             # swap matrix m
             mat[:, [row, pivot]] = mat[:, [pivot, row]]
@@ -106,7 +106,7 @@ def myPivotedCholeskyImplementation(m):
                     L[row][col] = temp / L[row][row]
                 else:
                     return (0, 0)
-    return (L, permutations)
+    return (L, P)
 
 
 def revertPivotedCholeskyImplementation(L, P):
@@ -142,16 +142,16 @@ print(revertPivotedCholeskyImplementation(
 print('\n')
 
 
-def myLDLTdecomposition(m):
-    D = np.eye(len(m), dtype=np.float32)
-    L = np.zeros(shape=m.shape)
+def myLDLTdecomposition(mat):
+    D = np.eye(len(mat), dtype=np.float32)
+    L = np.zeros(shape=mat.shape)
 
-    for row in range(len(m)):
-        for col in range(row, len(m)):
+    for row in range(len(mat)):
+        for col in range(row, len(mat)):
             sum_temp = np.float32()
             for ind in range(row):
                 sum_temp += L[ind][row] * D[ind][ind] * L[ind][col]
-            temp = m[row][col] - sum_temp
+            temp = mat[row][col] - sum_temp
 
             if row == col:
                 D[row][row] = temp
@@ -170,3 +170,68 @@ print('\nL= ')
 print(L)
 print('\nD= ')
 print(D)
+
+
+def myPivotedLDLTdecomposition(m):
+    mat = copy.deepcopy(m)
+    P = list(range(len(mat)))
+    D = np.eye(len(mat), dtype=np.float32)
+    L = np.zeros(shape=mat.shape)
+
+    for row in range(len(mat)):
+        diag = np.array(mat.diagonal())
+        maxVal = diag[row]
+        pivot = row
+        if row != len(mat) - 1:
+            for idx, val in enumerate(diag[row + 1:]):
+                if val > maxVal:
+                    pivot = idx + row + 1
+                    val = maxVal
+
+        if pivot != row:
+            # swap P
+            P[pivot] = P[row]
+            P[row] = pivot
+
+            # swap matrix mat
+            mat[:, [row, pivot]] = mat[:, [pivot, row]]
+            mat[[row, pivot], :] = mat[[pivot, row], :]
+
+            # swap columns of result
+            L[:, [row, pivot]] = L[:, [pivot, row]]
+
+        for col in range(row, len(mat)):
+            sum_temp = np.float32()
+            for ind in range(row):
+                sum_temp += L[ind][row] * D[ind][ind] * L[ind][col]
+            temp = mat[row][col] - sum_temp
+
+            if row == col:
+                D[row][row] = temp
+                L[row][row] = 1.0
+            else:
+                if D[row][row] != 0:
+                    L[row][col] = temp / D[row][row]
+                else:
+                    return (0, 0)
+    return (L, D, P)
+
+
+def revertPivotedLDLTDecomposition(L, D, P):
+    matrix = np.dot(np.dot(np.transpose(L), D), L)
+    return applyPermutation(matrix, P)
+
+
+print('My implementation of pivoted LDLT decomposition = ')
+L, D, P = myPivotedLDLTdecomposition(mat4x4)
+print(P)
+print(L)
+print(D)
+print('\n')
+
+print('Test matrix = ')
+print(mat4x4)
+print('L * LT permutated = ')
+print(revertPivotedLDLTDecomposition(
+    L, D, P))
+print('\n')
