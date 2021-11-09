@@ -11,6 +11,8 @@ mat4x4 = np.array([[2.0, 4.0, -2.0, 2.0],
                    [-2.0, -1.0, 14.0, 13.0],
                    [2.0, 6.0, 13.0, 35.0]])
 
+matWrong = np.array([[1.0, 2.0, 3.0], [2.0, 4.0, 5.0], [3.0, 5.0, 6.0]])
+
 
 def applyPermutation(matrix, permutations):
     matrix_size = len(permutations)
@@ -232,6 +234,20 @@ print('\n')
 print('Test matrix = ')
 print(mat4x4)
 print('L * LT permutated = ')
+print(revertPivotedLDLTDecomposition(
+    L, D, P))
+print('\n')
+
+print('My implementation of pivoted LDLT decomposition = ')
+L, D, P = myPivotedLDLTdecomposition(matWrong)
+print(P)
+print(L)
+print(D)
+print('\n')
+
+print('Test matrix = ')
+print(matWrong)
+print('LDLT permutated = ')
 print(revertPivotedLDLTDecomposition(
     L, D, P))
 print('\n')
